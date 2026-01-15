@@ -1,4 +1,4 @@
-name: CI/CD - Ansible Deploy
+name: CI/CD - Ansible Deploy Local
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies and run tests
+      - name: Install dependencies & run tests
         run: |
           cd apps/myapp
           npm install
@@ -24,26 +24,18 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
       - name: Install Ansible
         run: |
           sudo apt update
-          sudo apt install -y python3-pip ssh
+          sudo apt install -y python3-pip
           pip3 install ansible
 
       - name: Deploy with Ansible
         run: |
           cd ansible
-          ansible-playbook playbooks/deploy.yml -i inventories/production.yml --user=deploy --private-key=~/.ssh/id_rsa
+          ansible-playbook playbooks/deploy.yml
