@@ -1,54 +1,29 @@
-name: CI/CD - Ansible Deploy
+name: CI/CD - Ansible Practice
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # 1️⃣ Clonar el repositorio
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install deps & run tests
-        run: |
-          cd apps/myapp
-          npm install
-          npm test
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
+      # 2️⃣ Instalar Ansible
       - name: Install Ansible
         run: |
           sudo apt update
-          sudo apt install -y python3-pip sshpass
-          pip3 install ansible
+          sudo apt install -y ansible
 
-      - name: Deploy with Ansible
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
+      # 3️⃣ Verificar sintaxis del playbook
+      - name: Ansible syntax check
         run: |
-          cd ansible
-          ansible-playbook -i <(echo "${{ secrets.SSH_HOST }},") \
-            -u ${{ secrets.SSH_USER }} \
-            --private-key ~/.ssh/id_rsa \
-            playbooks/deploy.yml
+          ansible-playbook deploy.yml --syntax-check
+
+      # 4️⃣ Simular el deploy (modo dry-run)
+      - name: Simulate Deployment
+        run: |
+          ansible-playbook deploy.yml --check -i localhost, -c local
