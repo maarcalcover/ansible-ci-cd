@@ -9,19 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Clonar el repositorio
       - uses: actions/checkout@v4
 
-      # 2️⃣ Instalar Ansible
       - name: Install Ansible
         run: |
           sudo apt update
           sudo apt install -y ansible
 
-      # 3️⃣ Verificar sintaxis del playbook
       - name: Ansible syntax check
-        run: ansible-playbooks ansible/playbooks/deploy.yml --syntax-check
+        run: ansible-playbook ansible/playbooks/deploy.yml --syntax-check
 
-      # 4️⃣ Simular el deploy (modo dry-run)
       - name: Simulate Deployment
         run: ansible-playbook ansible/playbooks/deploy.yml --check -i localhost, -c local
