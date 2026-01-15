@@ -8,14 +8,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install deps & run tests
+      - name: Install dependencies and run tests
         run: |
           cd apps/myapp
           npm install
@@ -25,23 +26,24 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip openssh-client
-          pip3 install ansible
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip ssh
+          pip3 install ansible
 
       - name: Deploy with Ansible
         run: |
           cd ansible
-          ansible-playbook playbooks/deploy.yml -i inventories/production.yml --ssh-extra-args "-o StrictHostKeyChecking=no"
+          ansible-playbook playbooks/deploy.yml -i inventories/production.yml --user=deploy --private-key=~/.ssh/id_rsa
