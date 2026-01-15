@@ -1,23 +1,41 @@
-name: CI/CD - Ansible Practice
-# a
+name: Deploy Node.js App
+
 on:
   push:
     branches: [ main ]
 
 jobs:
-  ci:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # 1️⃣ Clonar el repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install Ansible
+      # 2️⃣ Instalar dependencias de Ansible
+      - name: Set up Python and Ansible
         run: |
           sudo apt update
-          sudo apt install -y ansible
+          sudo apt install -y python3 python3-pip sshpass
+          pip3 install --upgrade pip
+          pip3 install ansible
 
-      - name: Ansible syntax check
-        run: ansible-playbook ansible/playbooks/deploy.yml -i ansible/inventories/production.yml --syntax-check
+      # 3️⃣ Configurar llave SSH
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 127.0.0.1 >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      - name: Simulate Deployment
-        run: ansible-playbook ansible/playbooks/deploy.yml -i ansible/inventories/production.yml --check
+      # 4️⃣ Probar conexión SSH (opcional pero recomendado)
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/id_rsa deploy@127.0.0.1 "echo 'SSH OK!'"
+
+      # 5️⃣ Ejecutar el playbook de Ansible
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook ansible/playbooks/deploy.yml -i ansible/inventories/production.yml
