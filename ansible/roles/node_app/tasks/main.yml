@@ -1,0 +1,14 @@
+---
+- name: Install required packages
+  apt:
+    name:
+      - git
+      - nodejs
+      - npm
+    state: present
+    update_cache: yes
+  become: yes
+
+
+- name: Include deploy tasks
+  import_tasks: deploy.yml

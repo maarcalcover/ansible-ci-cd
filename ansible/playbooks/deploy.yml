@@ -1,0 +1,6 @@
+---
+- name: Deploy Node.js app
+  hosts: all
+  become: yes
+  roles:
+    - node_app
